@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prom-keda
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prom-keda
+  namespace: prom-keda
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prom-keda
+  namespace: prom-keda
+  labels:
+    app: prom-keda
+spec:
+  selector:
+    matchLabels:
+      app: prom-keda
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: prom-keda
+        app.kubernetes.io/name: prom-keda
+    spec:
+      serviceAccountName: prom-keda
+      containers:
+      - name: prom-keda
+        image: quay.io/brancz/prometheus-example-app:v0.3.0
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 10m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prom-keda-service
+  namespace: prom-keda
+  labels:
+    app: prom-keda
+spec:
+  type: ClusterIP
+  selector:
+    app: prom-keda
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+---

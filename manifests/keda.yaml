@@ -1,0 +1,33 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: prom-keda
+  namespace: prom-keda
+spec:
+  minReplicaCount: 1
+  maxReplicaCount: 15
+  pollingInterval: 10
+  scaleTargetRef:
+    name: prom-keda
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          policies:
+          - periodSeconds: 15
+            type: Percent
+            value: 100
+          selectPolicy: Max
+          stabilizationWindowSeconds: 30
+  triggers:
+  - type: cpu
+    metricType: Utilization
+    metadata:
+      value: "30"
+  - type: prometheus
+    metricType: "AverageValue"
+    metadata:
+      serverAddress: http://prometheus-prometheus.prometheus:9090
+      metricName: http_requests_total
+      threshold: '5'
+      query: sum(rate(http_requests_total{namespace="prom-keda"}[30s]))

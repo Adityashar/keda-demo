@@ -1,0 +1,29 @@
+kubeStateMetrics:
+  enabled: false
+kubeApiServer:
+  enabled: false
+nodeExporter:
+  enabled: false
+grafana:
+  enabled: false
+alertmanager:
+  enabled: false
+kubelet:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+nameOverride: prometheus
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchLabels:
+        release: demo
+    queryLogFile: /dev/stdout
+    scrapeInterval: "10s"
+    scrapeTimeout: "5s"
+    enableAdminAPI: true
+    retention: 15m
+    paused: false
+    retentionSize: 50MB
