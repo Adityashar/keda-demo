@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: load
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: load
+  namespace: load
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: load
+  namespace: load
+data:
+  run.sh: | 
+    end=$((SECONDS+3000))
+    while [ $SECONDS -lt $end ]; do
+    curl http://prom-keda-service.prom-keda.svc.cluster.local
+    done
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load
+  namespace: load
+  labels:
+    app: load
+spec:
+  selector:
+    matchLabels:
+      app: load
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: load
+    spec:
+      serviceAccountName: load
+      containers:
+      - name: load
+        image: bitnami/kubectl:1.21
+        command: ["/bin/bash", "/script/run.sh"]
+        volumeMounts:
+          - name: "load"
+            mountPath: /script/run.sh
+            subPath: run.sh
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 10m
+      volumes:
+        - name: "load"
+          configMap:
+            name: "load"
+            defaultMode: 0777
+---
